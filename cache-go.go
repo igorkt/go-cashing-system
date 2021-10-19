@@ -10,10 +10,14 @@ func NewCache() Cache {
 	}
 }
 
+// set only if cache is not null (memory allocated)
 func (c *Cache) Set(key string, value interface{}) {
-	c.pair[key] = value
+	if c != nil {
+		c.pair[key] = value
+	}
 }
 
+// return nil if no such value
 func (c *Cache) Get(key string) interface{} {
 	value, ok := c.pair[key]
 	if ok {
@@ -22,6 +26,7 @@ func (c *Cache) Get(key string) interface{} {
 	return nil
 }
 
+// delete only if key exists or nothing happens
 func (c *Cache) Delete(key string) {
 	_, ok := c.pair[key]
 	if ok {
