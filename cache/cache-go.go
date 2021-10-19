@@ -1,11 +1,30 @@
 package cacheGo
 
-type MemoryCache interface {
-	Set(key string, value interface{}) bool
-	Get(key string)
-	Delete(key string)
+type Cache struct {
+	pair map[string]interface{}
 }
 
-func (memCache MemoryCache) Set(key string, value interface{}) bool {
+func NewCache() Cache {
+	return Cache{
+		pair: make(map[string]interface{}),
+	}
+}
 
+func (c *Cache) Set(key string, value interface{}) {
+	c.pair[key] = value
+}
+
+func (c *Cache) Get(key string) interface{} {
+	value, ok := c.pair[key]
+	if ok {
+		return value
+	}
+	return nil
+}
+
+func (c *Cache) Delete(key string) {
+	_, ok := c.pair[key]
+	if ok {
+		delete(c.pair, key)
+	}
 }
