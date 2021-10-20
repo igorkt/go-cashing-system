@@ -28,8 +28,5 @@ func (c *Cache) Get(key string) interface{} {
 
 // delete only if key exists or nothing happens
 func (c *Cache) Delete(key string) {
-	_, ok := c.pair[key]
-	if ok {
-		delete(c.pair, key)
-	}
+	delete(c.pair, key)
 }
