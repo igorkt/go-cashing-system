@@ -7,7 +7,7 @@ type Cache struct {
 	mu   *sync.RWMutex
 }
 
-func NewCache() Cache {
+func New() Cache {
 	return Cache{
 		pair: make(map[string]interface{}),
 	}
