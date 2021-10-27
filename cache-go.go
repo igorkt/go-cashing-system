@@ -10,6 +10,7 @@ type Cache struct {
 func New() Cache {
 	return Cache{
 		pair: make(map[string]interface{}),
+		mu:   new(sync.RWMutex),
 	}
 }
 
