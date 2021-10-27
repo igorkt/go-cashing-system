@@ -36,5 +36,7 @@ func (c *Cache) Get(key string) interface{} {
 
 // delete only if key exists or nothing happens
 func (c *Cache) Delete(key string) {
+	c.mu.Lock()
 	delete(c.pair, key)
+	c.mu.Unlock()
 }
