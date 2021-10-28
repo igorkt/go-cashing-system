@@ -44,7 +44,7 @@ func (c *Cache) Get(key string) interface{} {
 	defer c.mu.RUnlock()
 
 	item, ok := c.items[key]
-	if ok && c.items[key].expireTime.UnixNano() < time.Now().UnixNano() {
+	if ok && item.expireTime.UnixNano() < time.Now().UnixNano() {
 		return item.value
 	}
 	return nil
@@ -58,15 +58,15 @@ func (c *Cache) Delete(key string) {
 }
 
 func (c *Cache) StartBackgroundTasks() {
-	go c.DeleteExpired()
+	for {
+		go c.deleteExpired()
+	}
 }
 
-func (c *Cache) DeleteExpired() {
-	for {
-		for key, item := range c.items {
-			if item.expireTime.UnixNano() > time.Now().UnixNano() {
-				c.Delete(key)
-			}
+func (c *Cache) deleteExpired() {
+	for key, item := range c.items {
+		if item.expireTime.UnixNano() > time.Now().UnixNano() {
+			c.Delete(key)
 		}
 	}
 }
