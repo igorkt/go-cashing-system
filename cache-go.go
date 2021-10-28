@@ -5,28 +5,35 @@ import (
 	"time"
 )
 
-const defaultTTL = 5 * time.Second
-
-type Cache struct {
-	pair       map[string]interface{}
-	mu         *sync.RWMutex
+type CacheItem struct {
+	value      interface{}
 	expireTime time.Time
 }
 
-func New() Cache {
-	return Cache{
-		pair:       make(map[string]interface{}),
-		mu:         new(sync.RWMutex),
-		expireTime: time.Now().Add(defaultTTL),
+type Cache struct {
+	items map[string]CacheItem
+	mu    *sync.RWMutex
+}
+
+func New() *Cache {
+	newCache := Cache{
+		items: make(map[string]CacheItem),
+		mu:    new(sync.RWMutex),
 	}
+
+	newCache.StartBackgroundTasks()
+
+	return &newCache
 }
 
 // set only if cache is not null (memory allocated)
-func (c *Cache) Set(key string, value interface{}, ttl time.Duration) {
+func (c *Cache) Set(key string, val interface{}, ttl time.Duration) {
 	if c != nil {
 		c.mu.Lock()
-		c.pair[key] = value
-		c.expireTime = time.Now().Add(ttl)
+		c.items[key] = CacheItem{
+			value:      val,
+			expireTime: time.Now().Add(ttl),
+		}
 		c.mu.Unlock()
 	}
 }
@@ -34,10 +41,11 @@ func (c *Cache) Set(key string, value interface{}, ttl time.Duration) {
 // return nil if no such value
 func (c *Cache) Get(key string) interface{} {
 	c.mu.RLock()
-	value, ok := c.pair[key]
-	c.mu.RUnlock()
-	if ok {
-		return value
+	defer c.mu.RUnlock()
+
+	item, ok := c.items[key]
+	if ok && c.items[key].expireTime.UnixNano() < time.Now().UnixNano() {
+		return item.value
 	}
 	return nil
 }
@@ -45,6 +53,18 @@ func (c *Cache) Get(key string) interface{} {
 // delete only if key exists or nothing happens
 func (c *Cache) Delete(key string) {
 	c.mu.Lock()
-	delete(c.pair, key)
+	delete(c.items, key)
 	c.mu.Unlock()
+}
+
+func (c *Cache) StartBackgroundTasks() {
+	go c.DeleteExpired()
+}
+
+func (c *Cache) DeleteExpired() {
+	for key, item := range c.items {
+		if item.expireTime.UnixNano() > time.Now().UnixNano() {
+			c.Delete(key)
+		}
+	}
 }
