@@ -62,9 +62,11 @@ func (c *Cache) StartBackgroundTasks() {
 }
 
 func (c *Cache) DeleteExpired() {
-	for key, item := range c.items {
-		if item.expireTime.UnixNano() > time.Now().UnixNano() {
-			c.Delete(key)
+	for {
+		for key, item := range c.items {
+			if item.expireTime.UnixNano() > time.Now().UnixNano() {
+				c.Delete(key)
+			}
 		}
 	}
 }
